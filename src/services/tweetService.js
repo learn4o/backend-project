@@ -21,6 +21,19 @@ function getUserTweets(userId) {
     return formattedTweets
 }
 
+function saveTweet(tweet) {
+    tweet.created_at = new Date()
+    let savedTweet = tweetModel.saveTweet(tweet)
+    let userDetails = userModel.getUserDetails(tweet.user_id)
+    
+    savedTweet.user_id = userDetails.id
+    savedTweet.user_display_name = userDetails.display_name
+    savedTweet.user_handle = userDetails.user_handle
+    savedTweet.metrics = getTweetMetrics(savedTweet.id)
+    
+    return savedTweet
+}
+
 function getTweetMetrics(tweetId) {
     return {
         comments: 0,
@@ -29,5 +42,6 @@ function getTweetMetrics(tweetId) {
 }
 
 module.exports = {
-    getUserTweets
+    getUserTweets,
+    saveTweet
 }

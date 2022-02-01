@@ -26,6 +26,17 @@ function getTweets(userId) {
     return tweets
 }
 
+function getNextAvailableId() {
+    return Object.keys(data).length + 1
+}
+
+function saveTweet(tweet) {
+    tweet.id = getNextAvailableId()
+    data[tweet.id] = tweet
+    return data[tweet.id]
+}
+
 module.exports = {
-    getTweetsOfUser
+    getTweetsOfUser,
+    saveTweet
 }
