@@ -2,8 +2,10 @@
 
 const tweetModel = require('./../models/tweet')
 const userModel = require('./../models/user')
+const log = require('./../util/logger')
 
 function getUserTweets(userId) {
+    log.info(`Getting tweets for user: ${userId}`)
     let userDetails = userModel.getUserDetails(userId)
     let tweets = tweetModel.getTweetsOfUser(userId)
 
