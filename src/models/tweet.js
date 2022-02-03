@@ -1,13 +1,10 @@
 'use strict'
 
-let data = {
-    1: {
-        'id': 1,
-        'user_id': 100,
-        'message': 'This is my first tweet',
-        'created_at': '2022-01-31T15:13:22.532Z'
-    }
-}
+const fs = require('fs/promises')
+
+let data = require('./../../data/tweet.json')
+
+const filePath = `${__dirname}/../../data/tweet.json`
 
 function getTweetsOfUser(userId) {
     let tweets = getTweets(userId)
@@ -30,9 +27,10 @@ function getNextAvailableId() {
     return Object.keys(data).length + 1
 }
 
-function saveTweet(tweet) {
+async function saveTweet(tweet) {
     tweet.id = getNextAvailableId()
     data[tweet.id] = tweet
+    await fs.writeFile(filePath, JSON.stringify(data), 'utf-8')
     return data[tweet.id]
 }
 

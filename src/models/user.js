@@ -2,13 +2,7 @@
 
 const { AssertionError } = require("assert")
 
-let data = {
-    100: {
-        id: 100,
-        display_name: 'ISRO',
-        user_handle: 'isro'
-    }
-}
+let data = require('./../../data/user.json')
 
 function getUserDetails(userId) {
     if (!data[userId]) {

@@ -31,8 +31,8 @@ function validateTweet(req, res, next) {
     next()
 }
 
-function saveTweet(req, res, next) {
-    res.send(tweetService.saveTweet(req.body))
+async function saveTweet(req, res, next) {
+    res.send(await tweetService.saveTweet(req.body))
 }
 
 module.exports = {
