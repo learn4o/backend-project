@@ -12,9 +12,13 @@ function validateUserId(req, res, next) {
     next(error.validationError('Invalid user-id'))
 }
 
-function getTweetsOfUser(req, res, next) {
-    let tweets = tweetService.getUserTweets(req.userId)
-    res.send(tweets)
+async function getTweetsOfUser(req, res, next) {
+    try {
+        let tweets = await tweetService.getUserTweets(req.userId)
+        res.send(tweets)
+    } catch (error) {
+        return next(error)
+    }
 }
 
 function validateTweet(req, res, next) {

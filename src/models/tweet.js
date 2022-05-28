@@ -1,26 +1,26 @@
 'use strict'
 
 const fs = require('fs/promises')
+const db = require('./db')
 
 let data = require('./../../data/tweet.json')
 
 const filePath = `${__dirname}/../../data/tweet.json`
 
-function getTweetsOfUser(userId) {
-    let tweets = getTweets(userId)
+async function getTweetsOfUser(userId) {
+    let conn = await db.getConnection()
+    let tweets = await getUserTweets(conn, userId)
+    db.releaseConnection(conn)
     return tweets
 }
 
-function getTweets(userId) {
-    let tweets = []
-    Object.keys(data).forEach((id) => {
-        let tweet = data[id]
-        if (tweet.user_id == userId) {
-            tweets.push(tweet)
-        }
+function getUserTweets(conn, userId) {
+    return new Promise((resolve, reject) => {
+        conn.query('select id, user_id, message, created_at, likes from tweet where user_id = ?', userId, function (error, results, fields) {
+            if (error) return reject(error)
+            resolve(results)
+          });
     })
-
-    return tweets
 }
 
 function getNextAvailableId() {

@@ -4,10 +4,10 @@ const tweetModel = require('./../models/tweet')
 const userModel = require('./../models/user')
 const log = require('./../util/logger')
 
-function getUserTweets(userId) {
+async function getUserTweets(userId) {
     log.info(`Getting tweets for user: ${userId}`)
-    let userDetails = userModel.getUserDetails(userId)
-    let tweets = tweetModel.getTweetsOfUser(userId)
+    let userDetails = await userModel.getUserDetails(userId)
+    let tweets = await tweetModel.getTweetsOfUser(userId)
 
     let formattedTweets = []
     for (let tweet of tweets) {
@@ -38,8 +38,7 @@ async function saveTweet(tweet) {
 
 function getTweetMetrics(tweetId) {
     return {
-        comments: 0,
-        likes: 0
+        comments: 0
     }
 }
 
