@@ -24,9 +24,8 @@ async function getUserTweets(userId) {
 }
 
 async function saveTweet(tweet) {
-    tweet.created_at = new Date()
     let savedTweet = await tweetModel.saveTweet(tweet)
-    let userDetails = userModel.getUserDetails(tweet.user_id)
+    let userDetails = await userModel.getUserDetails(tweet.user_id)
     
     savedTweet.user_id = userDetails.id
     savedTweet.user_display_name = userDetails.display_name

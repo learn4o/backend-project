@@ -1,11 +1,7 @@
 'use strict'
 
-const fs = require('fs/promises')
 const db = require('./db')
-
-let data = require('./../../data/tweet.json')
-
-const filePath = `${__dirname}/../../data/tweet.json`
+const logger = require('./../util/logger')
 
 async function getTweetsOfUser(userId) {
     let conn = await db.getConnection()
@@ -23,15 +19,33 @@ function getUserTweets(conn, userId) {
     })
 }
 
-function getNextAvailableId() {
-    return Object.keys(data).length + 1
+async function saveTweet(tweet) {
+    let conn = await db.getConnection()
+    let tweetId = await saveTweetInDB(conn, tweet)
+    let tweetDetails = await getTweetDetails(conn, tweetId)
+    db.releaseConnection(conn)
+    return tweetDetails
 }
 
-async function saveTweet(tweet) {
-    tweet.id = getNextAvailableId()
-    data[tweet.id] = tweet
-    await fs.writeFile(filePath, JSON.stringify(data), 'utf-8')
-    return data[tweet.id]
+function saveTweetInDB(conn, tweet) {
+    return new Promise((resolve, reject) => {
+        conn.query({
+            sql: 'insert into tweet(id, user_id, message) values(?, ?, ?)',
+            timeout: 2000
+        }, [null, tweet.user_id, tweet.message], (error, results, fields) => {
+            if (error) return reject(error)
+            resolve(results.insertId)
+        })
+    })
+}
+
+function getTweetDetails(conn, tweetId) {
+    return new Promise((resolve, reject) => {
+        conn.query('select id, user_id, message, created_at, likes from tweet where id = ?', tweetId, function (error, results, fields) {
+            if (error) return reject(error)
+            resolve(results[0])
+          });
+    })
 }
 
 module.exports = {
