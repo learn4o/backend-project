@@ -1,0 +1,674 @@
+swagger: "2.0"
+info:
+  description: "This is the twitter project at L4O for backend-course"
+  version: "1.0.0"
+  title: "Twitter Project"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "instrauctor@l4o.in"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+host: "localhost"
+basePath: "/v1"
+tags:
+- name: "tweet"
+  description: "Everything about the message"
+- name: "user"
+  description: "Operations about user"
+- name: "comment"
+  description: "Comments on tweet"
+schemes:
+- "http"
+paths:
+  /tweets:
+    get:
+      tags:
+      - "tweet"
+      summary: "Lists all the tweets based on provided filters"
+      description: "Client can all tweets of a user with user_id filter which would return list of tweets of user in descending order with 10 records as default page size"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "user_id"
+        in: "query"
+        description: "Load all tweets of this user"
+        required: true
+        type: "integer"
+        format: "int32"
+      - name: "page_size"
+        in: "query"
+        description: "Clients can overload this value for page size. If clients pass more than 50, it'll be set to 50"
+        required: false
+        type: "integer"
+        format: "int32"
+        default: 10
+        minimum: 1
+        maximum: 20
+      - name: "before_id"
+        in: "query"
+        description: "For paginated queries, this param will help in load data before the before_id. It is guaranteed tweet id's are monotonically increasing over time"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "0 or more tweets (upto Max page i.e. 50)"
+          schema:
+            type: "array"
+            items:
+              $ref: '#/definitions/Tweet'
+        "400":
+          description: "Invalid user-id or not provided"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+    post:
+      tags:
+      - "tweet"
+      # security:
+      # - cookie_auth: []
+      summary: "Post new tweet"
+      description: ""
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: true
+        schema:
+          type: object
+          required:
+          - user_id
+          - message
+          properties:
+            user_id:
+              type: "integer"
+              format: "int32"
+              example: 25
+            message:
+              type: "string"
+              example: "this is a sample tweet"
+      responses:
+        "200":
+          description: "Tweet saved successfully"
+          schema:
+            $ref: "#/definitions/Tweet"
+        "400":
+          description: "Invalid message provided. Check for length"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /tweets/{tweet_id}:
+    delete:
+      tags:
+      - "tweet"
+      # security:
+      # - cookie_auth: []
+      summary: "Delete an existing tweet"
+      description: "This operation on already deleted tweet would not do anything but simply return successful response. User can delete their own tweets only"
+      parameters:
+      - name: "tweet_id"
+        in: "path"
+        description: "Details of this tweet_id"
+        required: true
+        type: "integer"
+        format: "int32"
+      responses:
+        "204":
+          description: "successful operation. No body will be sent in response"
+        "400":
+          description: "Invalid message provided. Check for length"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /tweets/{tweet_id}/like:
+    put:
+      tags:
+      - "tweet"
+      # security:
+      # - cookie_auth: []
+      summary: "Like tweet"
+      description: "Like operation on the tweet_id. Like and discard of previous like can be performed with this API"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "tweet_id"
+        in: "path"
+        description: "operation is being performed on this tweet_id"
+        required: true
+        type: "integer"
+        format: "int32"
+      - in: "body"
+        name: "like"
+        description: "Like/unlike operation on tweet"
+        schema:
+          type: object
+          required:
+          - user_id
+          - operation
+          properties:
+            user_id:
+              type: "integer"
+              format: "int32"
+              example: 25
+            operation:
+              type: "string"
+              enum: ["like", "discard"]
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+                format: "int32"
+                description: "Tweet id"
+              likes:
+                type: "integer"
+                format: "int32"
+                description: "total number of likes"
+        "400":
+          description: "Invalid message provided. Check for length"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /tweets/likes:
+    get:
+      tags:
+      - "tweet"
+      summary: "Lists all the tweets liked by the user"
+      description: "List all the liked tweets of user_id in descending order of liked time. This paginated API would return paginated data and client can ask with before_id param for older tweets"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "user_id"
+        in: "query"
+        description: "Load all liked tweets of this user"
+        required: true
+        type: "integer"
+        format: "int32"
+      - name: "page_size"
+        in: "query"
+        description: "Clients can overload this value for page size. If clients pass more than 50, it'll be set to 50"
+        required: false
+        type: "integer"
+        format: "int32"
+        default: 10
+        minimum: 1
+        maximum: 50
+      - name: "before_id"
+        in: "query"
+        description: "For paginated queries, this param will help in load data before the before_id. It is guaranteed tweet id's are monotonically increasing over time"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "0 or more tweets (upto Max page i.e. 50)"
+          schema:
+            type: "array"
+            items:
+              $ref: '#/definitions/Tweet'
+        "400":
+          description: "Invalid user-id or not provided"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /tweets/{tweet_id}/comments:
+    get:
+      tags:
+      - "comment"
+      summary: "List comments for a tweet"
+      description: "Comments in descreasing order of time would be returned. API supports pagination"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "tweet_id"
+        in: "path"
+        description: "tweet for which comments to be loaded"
+        required: true
+        type: "integer"
+        format: "int32"
+      - name: "page_size"
+        in: "query"
+        description: "Clients can overload this value for page size. If clients pass more than 50, it'll be set to 50"
+        required: false
+        type: "integer"
+        format: "int32"
+        default: 10
+        minimum: 1
+        maximum: 20
+      - name: "before_id"
+        in: "query"
+        description: "For paginated queries, this param will help in load data before the before_id. It is guaranteed tweet id's are monotonically increasing over time"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "0 or more comments"
+          schema:
+            type: "array"
+            items:
+              $ref: '#/definitions/Comment'
+        "400":
+          description: "Invalid tweet-id provided"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+    post:
+      tags:
+      - "comment"
+      # security:
+      # - cookie_auth: []
+      summary: "Add new comment on the tweet"
+      description: ""
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "tweet_id"
+        in: "path"
+        required: true
+        type: "integer"
+        format: "int32"
+      - in: "body"
+        name: "body"
+        description: ""
+        required: true
+        schema:
+          type: "object"
+          required:
+          - user_id
+          - message
+          properties:
+            user_id:
+              type: "integer"
+              minLength: 1
+              maxLength: 100
+              format: "int32"
+              example: 25
+            message:
+              type: "string"
+              example: "This is a sample comment on a tweet"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Comment"
+        "400":
+          description: "Characters exceeding limit of 100 characters"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /comments/{comment_id}:
+    get:
+      tags:
+      - "comment"
+      summary: "Get details by comment id"
+      description: "Get comment details. This would power the use-case where user will directly land on the comment instead of tweet"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "comment_id"
+        in: "path"
+        required: true
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: '#/definitions/Comment'
+        "400":
+          description: "Invalid or non-existing comment-id received"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+    delete:
+      tags:
+      - "comment"
+      # security:
+      # - cookie_auth: []
+      summary: "Delete an existing comment"
+      description: "This deletes a comment. If it's already deleted, it does nothing"
+      parameters:
+      - name: "comment_id"
+        in: "path"
+        required: true
+        type: "integer"
+        format: "int32"
+      responses:
+        "204":
+          description: "successful operation. No body will be sent in response"
+        "400":
+          description: "Invalid or non-existing comment-id"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  # /users:
+  #   post:
+  #     tags:
+  #     - "user"
+  #     summary: "Create user"
+  #     description: "There is a unique check on username. Users can pick the available username at the time of registration. Username and user_handle are synonymous"
+  #     operationId: "createUser"
+  #     parameters:
+  #     - in: "body"
+  #       name: "body"
+  #       description: "User details. No need to pass id while creating a new user"
+  #       required: true
+  #       schema:
+  #         $ref: "#/definitions/User"
+  #     responses:
+  #       "204":
+  #         description: "Operation successful"
+  #       "400":
+  #         description: "Length may be out of bounds. Username many not be available"
+  #         schema:
+  #           $ref: "#/definitions/ValidationErrorResponse"
+  #       "500":
+  #         description: "Server side error"
+  #         schema:
+  #           $ref: "#/definitions/ServerErrorResponse"
+  /users/{user_id}:
+    get:
+      tags:
+      - "user"
+      summary: "User details for a specific user"
+      description: "Used for home timeline of a user. A lot of details are already coming in the tweet API's response but for home timeline we need all details. Apart from this if user don't have any tweet, this will be the only source"
+      operationId: "getUserByName"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "user_id"
+        in: "path"
+        description: "Fetches user profile information with user_id"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/User"
+        "400":
+          description: "Validation failure on user-id or if incorrect user-id is provided"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+    put:
+      tags:
+      - "user"
+      # security:
+      # - cookie_auth: []
+      summary: "Update user details"
+      description: "Users can update their own data. Certain fields can't be updated eg: user_id, user_handle"
+      operationId: "updateUser"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "user_id"
+        in: "path"
+        description: "update data for user_id"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Provide updated user object. One or more fields can be updated with this API"
+        required: true
+        schema:
+          $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/User"
+        "400":
+          description: "Validation failure on user-id or if incorrect user-id is provided. Some fields are write protected and if they are received in body, validation error will be raised"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /users/{user_id}/followers:
+    get:
+      tags:
+      - "user"
+      summary: "Followers of the user"
+      description: "List all the followers of a user. This API supports pagination"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "user_id"
+        in: "path"
+        description: "User on which operation is being made"
+        required: true
+        type: "string"
+      - name: "page_size"
+        in: "query"
+        description: "Clients can overload this value for page size. If clients pass more than 50, it'll be set to 50"
+        required: false
+        type: "integer"
+        format: "int32"
+        default: 10
+        minimum: 1
+        maximum: 50
+      - name: "after_id"
+        in: "query"
+        description: "For paginated queries, this param will load data after the id. The last id of current page should be passed for next page to load the data properly"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "basic user details required for frontend"
+          schema:
+            $ref: "#/definitions/BasicUserDetails"
+        "400":
+          description: "Validation failure on user-id or if incorrect user-id is provided"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /users/{user_id}/followee:
+    get:
+      tags:
+      - "user"
+      summary: "Users whom the user if following"
+      description: "List all the followee of a user. This API supports pagination"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "user_id"
+        in: "path"
+        description: "User on which operation is being made"
+        required: true
+        type: "string"
+      - name: "page_size"
+        in: "query"
+        description: "Clients can overload this value for page size. If clients pass more than 50, it'll be set to 50"
+        required: false
+        type: "integer"
+        format: "int32"
+        default: 10
+        minimum: 1
+        maximum: 50
+      - name: "after_id"
+        in: "query"
+        description: "For paginated queries, this param will load data after the id. The last id of current page should be passed for next page to load the data properly"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "basic user details required for frontend"
+          schema:
+            $ref: "#/definitions/BasicUserDetails"
+        "400":
+          description: "Validation failure on user-id or if incorrect user-id is provided"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+  /users/follow:
+    put:
+      tags:
+      - "user"
+      # security:
+      # - cookie_auth: []
+      summary: "Logged in user would follow user_id"
+      description: "List all the followee of a user. This API supports pagination"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "follow"
+        description: "Follow request body"
+        schema:
+          type: object
+          required:
+          - follower_id
+          - followee_id
+          - operation
+          properties:
+            follower_id:
+              type: "integer"
+              format: "int32"
+              example: 25
+            followee_id:
+              type: "integer"
+              format: "int32"
+              example: 233
+            operation:
+              type: "string"
+              enum: ["follow", "unfollow"]
+      responses:
+        "204":
+          description: "OK"
+        "400":
+          description: "user id is not valid. If unfollow operation is called without following a user"
+          schema:
+            $ref: "#/definitions/ValidationErrorResponse"
+        "500":
+          description: "Server side error"
+          schema:
+            $ref: "#/definitions/ServerErrorResponse"
+# securityDefinitions:
+#   cookie_auth:
+#     type: "apiKey"
+#     name: "X-User-Token"
+#     in: "header"
+definitions:
+  Tweet:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int32"
+        description: "Unique tweet identifier"
+      message:
+        type: "string"
+        description: "Tweet message which user posted"
+      user_id:
+        type: "integer"
+        format: "int32"
+      created_at:
+        type: "integer"
+        format: "int64"
+        description: "Timestamp of the tweet generation"
+      user_display_name:
+        type: "string"
+      user_handle:
+        type: "string"
+      likes:
+        type: "integer"
+        format: "int32"
+  BasicUserDetails:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      user_display_name:
+        type: "string"
+      profile_pic:
+        type: "string"
+  ValidationErrorResponse:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        description: "Validation error message"
+  ServerErrorResponse:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        description: "Failure message for server side errors"
+  Comment:
+    allOf:
+    - $ref: "#/definitions/BasicUserDetails"
+    - type: "object"
+      properties:
+        comment:
+          type: "string"
+        timestamp:
+          type: "integer"
+          format: "int32"
+          example: 1655667405
+          description: "epoch time in seconds when comment was made"
+  User:
+    allOf:
+    - $ref: "#/definitions/BasicUserDetails"
+    - type: "object"
+      properties:
+        user_handle:
+          type: "string"
+        background_pic:
+          type: "string"
+        description:
+          type: "string"
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"
